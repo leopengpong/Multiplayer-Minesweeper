@@ -67,7 +67,7 @@ io.on('connection', function(socket) {
 			}
 		io.sockets.emit('update players', players);
 		if (game.state == 'lost') {
-			var triggerer = socket.handle;
+			triggerer = socket.handle;
 			io.sockets.emit('lost', socket.handle);
 		} else if (game.state == 'won') {
 			io.sockets.emit('won');

@@ -175,7 +175,7 @@ newGameConfirm.addEventListener('click', function (e) {
 
 	if (newWidth >= 3 && newWidth<= 200 &&
 		newHeight >= 3 && newHeight<= 200 &&
-		newDensity >= 1 && newDensity<= 90)
+		newDensity >= 1 && newDensity<= 50)
 	{
 		var newGameData = {
 			width: newWidth,
