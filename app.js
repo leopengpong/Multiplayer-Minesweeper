@@ -100,9 +100,6 @@ io.on('connection', function(socket) {
 
 
 
-
-
-
 function Game (width, height, density) {
 	if (density < 0 || density >= 1)
 		throw 'invalid density';
