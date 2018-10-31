@@ -115,7 +115,7 @@ socket.on('init', function (data) {
 		e.preventDefault();
 		handleClick(e, 'right');
 	}
-	canv.width = (cSize+cSpacing)*gmWidth - cSpacing + 430;
+	canv.width = (cSize+cSpacing)*gmWidth - cSpacing + 330;
 	canv.height = (cSize+cSpacing)*gmHeight - cSpacing + 100;
 	draw();
 
@@ -171,11 +171,11 @@ socket.on('lost', function (triggerer) {
 newGameConfirm.addEventListener('click', function (e) {
 	newWidth = parseInt(newWidthInput.value);
 	newHeight = parseInt(newHeightInput.value);
-	newDensity = parseFloat(newDensityInput.value);
+	newDensity = parseInt(newDensityInput.value);
 
 	if (newWidth >= 3 && newWidth< 1000 &&
 		newHeight >= 3 && newHeight< 1000 &&
-		newDensity > 0 && newDensity< 0.9)
+		newDensity > 0 && newDensity<= 90)
 	{
 		var newGameData = {
 			width: newWidth,

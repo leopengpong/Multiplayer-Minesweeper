@@ -31,12 +31,11 @@
 		#canv {
 			border: 1px solid black;
 			display: none;
-			right: 400px;
 		}
 
 		#info {
 			display: none;
-			width: 400px;
+			width: 300px;
 			position: fixed;
 			top: 0px;
 			right: 0px;
@@ -48,6 +47,14 @@
 
 		.progress .bar {
 			max-width: 100%;
+		}
+
+		input {
+			width: 120px;
+		}
+
+		#handleInput {
+			width: 200px;
 		}
 
 
@@ -109,15 +116,15 @@
 		<h3>Create New Game Dimensions...</h3>
 		<div class="ui right labeled input">
 			<input id="newWidthInput" type="text" placeholder="Enter width..">
-			<div class="ui basic label">cells wide</div>
+			<div class="ui basic label">cells wide (3-999)</div>
 		</div>
 		<div class="ui right labeled input">
 			<input id="newHeightInput" type="text" placeholder="Enter height..">
-			<div class="ui basic label">cells tall</div>
+			<div class="ui basic label">cells tall (3-999)</div>
 		</div>
 		<div class="ui right labeled input">
 			<input id="newDensityInput" type="text" placeholder="Enter density..">
-			<div class="ui basic label">%</div>
+			<div class="ui basic label">% mines (1-90)</div>
 		</div><br>
 		<button id="newGameConfirm" class="ui button">create new game</button>
 	</div>

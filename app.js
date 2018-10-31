@@ -88,7 +88,7 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('restart', function (data) {
-		game = new Game(data.width, data.height, data.density);
+		game = new Game(data.width, data.height, data.density/100);
 		for (var i = 0; i < players.length; ++i) {
 			players[i].numFlagged = 0;
 			players[i].numClicked = 0;
