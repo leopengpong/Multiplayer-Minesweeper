@@ -94,6 +94,7 @@ io.on('connection', function(socket) {
 			players[i].numClicked = 0;
 		}
 		io.sockets.emit('init', {gameData:game.getData()});
+		io.sockets.emit('update players', players);
 	});
 });
 
