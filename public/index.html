@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>woo</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+	<style>
+
+		body, html {
+			margin: 0;
+		}
+		body {
+			overflow: auto;
+		}
+
+		.ui.table {
+			line-height: 2px;
+		}
+
+		.ui.segment {
+			padding: 7px;
+			margin: 2px;
+		}
+
+		#handlePrompt {
+			width: 500px;
+			margin: auto;
+			top: 50px;
+		}
+
+		#canv {
+			border: 1px solid black;
+			display: none;
+			right: 400px;
+		}
+
+		#info {
+			display: none;
+			width: 400px;
+			position: fixed;
+			top: 0px;
+			right: 0px;
+		}
+
+		#gameLost, #gameWon #newGamePrompt {
+			display: none;
+		}
+
+		.progress .bar {
+			max-width: 100%;
+		}
+
+
+	</style>
+</head>
+<body>
+<!-- ---------------------------------- -->
+
+<div id="handlePrompt" class="ui segment">
+	<h1>Enter name</h1>
+	<p>1-15 characters please</p>
+	<div class="ui input">
+		<input id="handleInput" type="text" placeholder="your name" maxlength="15" minlength="1">
+	</div>
+	<button id="handleConfirm" class="ui button">ok</button>
+</div>
+
+<canvas id="canv"></canvas>
+<div id="info" class="ui container">
+	<div class="ui segment">
+		<h3>Online Players</h3>
+		<table class="ui table">
+			<thead><tr>
+				<td></td>
+				<td>Flagged</td>
+				<td>Cleared</td>
+			</tr></thead>
+			<tbody id="onlinePlayers">
+			</tbody>
+		</table>
+	</div>
+
+	<div class="ui segment">
+		<h3>Progress</h3>
+		<div class="ui progress blue">
+			<div id="numClearedBar" class="bar">
+				<div id="numClearedVal" class="progress"></div>
+			</div>
+			<div class="label">Total Cleared</div>
+		</div>
+		<div class="ui progress orange">
+			<div id="numFlaggedBar" class="bar">
+				<div id="numFlaggedVal" class="progress"></div>
+			</div>
+			<div class="label">Total Flagged</div>
+		</div>
+	</div>
+
+	<div id="gameLost" class="ui segment">
+		<h3>Game Over :(</h3>
+		<p>Mine triggered by <span id="triggerer"></span></p>
+	</div>
+
+	<div id="gameWon" class="ui segment">
+		<h3>Congratulations, You Win!!</h3>
+	</div>
+
+	<div id="newGamePrompt" class="ui segment">
+		<h3>Create New Game Dimensions...</h3>
+		<div class="ui right labeled input">
+			<input id="newWidthInput" type="text" placeholder="Enter width..">
+			<div class="ui basic label">cells wide</div>
+		</div>
+		<div class="ui right labeled input">
+			<input id="newHeightInput" type="text" placeholder="Enter height..">
+			<div class="ui basic label">cells tall</div>
+		</div>
+		<div class="ui right labeled input">
+			<input id="newDensityInput" type="text" placeholder="Enter density..">
+			<div class="ui basic label">%</div>
+		</div><br>
+		<button id="newGameConfirm" class="ui button">create new game</button>
+	</div>
+</div>
+
+
+
+<!-- ---------------------------------- -->
+</body>
+<script src="minesweeper-ui-sockets.js"></script>
+</html>
