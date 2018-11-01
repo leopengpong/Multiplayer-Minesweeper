@@ -22,6 +22,7 @@ var numFlaggedVal = document.querySelector('#numFlaggedVal');
 
 var info = document.querySelector('#info');
 var onlinePlayers = document.querySelector('#onlinePlayers');
+var bugReport = document.querySelector('#bugReport');
 var gameWon = document.querySelector('#gameWon');
 var gameLost = document.querySelector('#gameLost');
 var triggererDisplay = document.querySelector('#triggerer');
@@ -191,6 +192,12 @@ function updateProgressBars() {
 	numClearedVal.innerHTML = numClearedBar.style.width = parseInt(totalClicked*100/(gmWidth*gmHeight)) + '%';
 	numFlaggedVal.innerHTML = numFlaggedBar.style.width = parseInt(totalFlagged*100/numMines) + '%';
 }
+
+
+bugReport.addEventListener('click', function() {
+	prompt('Please describe your issue.\nThis app is in beta, so your feedback is appreciated!');
+	alert('Report submitted.\nThank you!');
+});
 
 
 
