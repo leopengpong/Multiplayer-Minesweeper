@@ -195,7 +195,7 @@ function updateProgressBars() {
 
 
 bugReport.addEventListener('click', function() {
-	if (prompt('Please describe your issue.\nThis app is in beta, so your feedback is appreciated!'));
+	if (prompt('Please describe your issue.\nThis app is in beta, so your feedback is appreciated!'))
 		alert('Report submitted.\nThank you!');
 });
 
