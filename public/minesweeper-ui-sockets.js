@@ -40,8 +40,8 @@ var keybinds = {
 	flag: 'right click',
 	click: 'left click'
 }
-var mouseX = 0;
-var mouseY = 0;
+var mouseX = -1;
+var mouseY = -1;
 
 
 // game variables
@@ -96,9 +96,17 @@ handleConfirm.addEventListener('click', function(e) {
 });
 
 window.addEventListener('mousemove', function (e) {
-	mouseX = parseInt((e.pageX-mLeft) / (cSize+cSpacing));
-	mouseY = parseInt((e.pageY-mTop) / (cSize+cSpacing));
+	if (e.pageX-mLeft > 0 && e.pageY-mTop > 0) {
+		mouseX = parseInt((e.pageX-mLeft) / (cSize+cSpacing));
+		mouseY = parseInt((e.pageY-mTop) / (cSize+cSpacing));
+	} else {
+		mouseX = -1;
+		mouseY = -1;
+	}
 });
+window.onkeydown = function(e) { 
+    return !(e.keyCode == 32);
+};
 
 window.addEventListener('keydown', function (e) {
 	if (playing)
@@ -110,6 +118,16 @@ window.addEventListener('keydown', function (e) {
 			handleClick('flag');
 		else if (e.keyCode == keybinds.click)
 			handleClick('click');
+	if (e.keyCode == 32) {
+		return false;
+	}
+});
+canv.addEventListener('click', function(e) {
+	if (playing && !(listeningForClick || listeningForFlag))
+		if (keybinds.click == 'left click')
+			handleClick('click');
+		else if (keybinds.flag == 'left click')
+			handleClick('flag');
 });
 window.addEventListener('click', function(e) {
 	if (playing)
@@ -117,11 +135,16 @@ window.addEventListener('click', function(e) {
 			updateKeyBinds('click', 'left click');
 		else if (listeningForFlag)
 			updateKeyBinds('flag', 'left click');
-		else if (keybinds.click == 'left click')
-			handleClick('click');
-		else if (keybinds.flag == 'left click')
-			handleClick('flag');
 });
+canv.oncontextmenu = function(e) {
+	if (playing && !(listeningForClick || listeningForFlag)) {
+		e.preventDefault();
+		if (keybinds.click == 'right click')
+			handleClick('click');
+		else if (keybinds.flag == 'right click')
+			handleClick('flag');
+	}
+}
 window.oncontextmenu = function(e) {
 	if (playing) {
 		e.preventDefault();
@@ -129,16 +152,12 @@ window.oncontextmenu = function(e) {
 			updateKeyBinds('click', 'right click');
 		else if (listeningForFlag)
 			updateKeyBinds('flag', 'right click');
-		else if (keybinds.click == 'right click')
-			handleClick('click');
-		else if (keybinds.flag == 'right click')
-			handleClick('flag');
 	}
 }
 
 // click handling
 function handleClick(type) {
-	if (state == 'ready' || state == 'ongoing') {
+	if (mouseX >= 0 && mouseY >= 0 && (state == 'ready' || state == 'ongoing')) {
 		if (mouseX < gmWidth && mouseY < gmHeight)
 			if (type == 'click') {
 				socket.emit('click', {handle:handle, x:mouseX, y:mouseY});
@@ -247,20 +266,30 @@ bugReport.addEventListener('click', function() {
 controlsButton.addEventListener('click', function() {
 	controlsPrompt.style.display = 'block';
 	controlType.innerHTML = 'click';
-	currentBind.innerHTML = typeof(keybinds.click) == 'number' ? String.fromCharCode(keybinds.click) : keybinds.click;
+	if (typeof(keybinds.click) == 'string') {
+		currentBind.innerHTML = keybinds.click;
+	} else if (keybinds.click == 32) {
+		currentBind.innerHTML = 'space';
+	} else {
+		currentBind.innerHTML = String.fromCharCode(keybinds.click);
+	}
 	setTimeout(function() {listeningForClick = true}, 10);
 });
 function updateKeyBinds(type, val) {
-	console.log(type, val);
 	if (type == 'click') {
 		keybinds.click = val;
 		listeningForClick = false;
 		listeningForFlag = true;
 		controlType.innerHTML = 'flag';
-		currentBind.innerHTML = typeof(keybinds.flag) == 'number' ? String.fromCharCode(keybinds.flag) : keybinds.flag;
+		if (typeof(keybinds.flag) == 'string') {
+			currentBind.innerHTML = keybinds.flag;
+		} else if (keybinds.flag == 32) {
+			currentBind.innerHTML = 'space';
+		} else {
+			currentBind.innerHTML = String.fromCharCode(keybinds.flag);
+		}
 	}
 	else if (type == 'flag') {
-		console.log('ok');
 		keybinds.flag = val;
 		listeningForFlag = false;
 		controlsPrompt.style.display = 'none';
