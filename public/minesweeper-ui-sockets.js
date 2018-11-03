@@ -29,7 +29,19 @@ var triggererDisplay = document.querySelector('#triggerer');
 var newGamePrompt = document.querySelector('#newGamePrompt');
 
 var body = document.querySelector('body');
+var controlsButton = document.querySelector('#controlsButton');
+var controlsPrompt = document.querySelector('#controlsPrompt');
+var controlType = document.querySelector('#controlType');
+var currentBind = document.querySelector('#currentBind');
 
+var listeningForClick = false;
+var listeningForFlag = false;
+var keybinds = {
+	flag: 'right click',
+	click: 'left click'
+}
+var mouseX = 0;
+var mouseY = 0;
 
 
 // game variables
@@ -56,6 +68,8 @@ var mineColor = '#ff0000';
 var mTop = 30;
 var mLeft = 30;
 var font = '16px Arial';
+
+var playing = false;
  
 body.style['background-color'] = bgColor;
 
@@ -63,8 +77,8 @@ body.style['background-color'] = bgColor;
 
 // canvas init
 // width and height are set after server requestx
-canv.style['margin-top'] = mTop + 'px';
-canv.style['margin-left'] = mLeft + 'px';
+canv.style['top'] = mTop + 'px';
+canv.style['left'] = mLeft + 'px';
 
 
 // get username
@@ -81,18 +95,55 @@ handleConfirm.addEventListener('click', function(e) {
 	}
 });
 
+window.addEventListener('mousemove', function (e) {
+	mouseX = parseInt((e.pageX-mLeft) / (cSize+cSpacing));
+	mouseY = parseInt((e.pageY-mTop) / (cSize+cSpacing));
+});
 
+window.addEventListener('keydown', function (e) {
+	if (playing)
+		if (listeningForClick)
+			updateKeyBinds('click', e.keyCode);
+		else if (listeningForFlag)
+			updateKeyBinds('flag', e.keyCode);
+		else if (e.keyCode == keybinds.flag)
+			handleClick('flag');
+		else if (e.keyCode == keybinds.click)
+			handleClick('click');
+});
+window.addEventListener('click', function(e) {
+	if (playing)
+		if (listeningForClick)
+			updateKeyBinds('click', 'left click');
+		else if (listeningForFlag)
+			updateKeyBinds('flag', 'left click');
+		else if (keybinds.click == 'left click')
+			handleClick('click');
+		else if (keybinds.flag == 'left click')
+			handleClick('flag');
+});
+window.oncontextmenu = function(e) {
+	if (playing) {
+		e.preventDefault();
+		if (listeningForClick)
+			updateKeyBinds('click', 'right click');
+		else if (listeningForFlag)
+			updateKeyBinds('flag', 'right click');
+		else if (keybinds.click == 'right click')
+			handleClick('click');
+		else if (keybinds.flag == 'right click')
+			handleClick('flag');
+	}
+}
 
 // click handling
-function handleClick(e, type) {
+function handleClick(type) {
 	if (state == 'ready' || state == 'ongoing') {
-		var x = parseInt((e.pageX-mLeft) / (cSize+cSpacing));
-		var y = parseInt((e.pageY-mTop) / (cSize+cSpacing));
-		if (x < gmWidth && y < gmHeight)
-			if (type == 'left') {
-				socket.emit('click', {handle:handle, x:x, y:y});
-			} else if (type == 'right') {
-				socket.emit('flag', {handle:handle, x:x, y:y});
+		if (mouseX < gmWidth && mouseY < gmHeight)
+			if (type == 'click') {
+				socket.emit('click', {handle:handle, x:mouseX, y:mouseY});
+			} else if (type == 'flag') {
+				socket.emit('flag', {handle:handle, x:mouseX, y:mouseY});
 			}
 	}
 }
@@ -108,17 +159,11 @@ socket.on('init', function (data) {
 	gmWidth = field.length;
 	gmHeight = field[0].length;
 	updateProgressBars();
-	
-	canv.addEventListener('click', function(e) {
-		handleClick(e, 'left');
-	});
-	canv.oncontextmenu = function(e) {
-		e.preventDefault();
-		handleClick(e, 'right');
-	}
+
 	canv.width = (cSize+cSpacing)*gmWidth - cSpacing + 330;
 	canv.height = (cSize+cSpacing)*gmHeight - cSpacing + 100;
 	draw();
+	playing = true;
 
 	// create initial state
 	gameLost.style.display = 'none';
@@ -137,7 +182,6 @@ socket.on('update players', function (players) {
 		}
 		newInnerHTML += '</td><td>'+ players[i].numFlagged +
 				'</td><td>'+ players[i].numClicked +'</td></tr>';
-		console.log(newInnerHTML);
 		onlinePlayers.innerHTML = newInnerHTML;
 	}
 });
@@ -189,15 +233,40 @@ newGameConfirm.addEventListener('click', function (e) {
 
 // update progress bars
 function updateProgressBars() {
-	numClearedVal.innerHTML = numClearedBar.style.width = parseInt(totalClicked*100/(gmWidth*gmHeight)) + '%';
+	numClearedVal.innerHTML = numClearedBar.style.width = parseInt(totalClicked*100/(gmWidth*gmHeight - numMines)) + '%';
 	numFlaggedVal.innerHTML = numFlaggedBar.style.width = parseInt(totalFlagged*100/numMines) + '%';
 }
 
-
+// bug reporter
 bugReport.addEventListener('click', function() {
 	if (prompt('Please describe your issue.\nThis app is in beta, so your feedback is appreciated!'))
 		alert('Report submitted.\nThank you!');
 });
+
+// change controls
+controlsButton.addEventListener('click', function() {
+	controlsPrompt.style.display = 'block';
+	controlType.innerHTML = 'click';
+	currentBind.innerHTML = typeof(keybinds.click) == 'number' ? String.fromCharCode(keybinds.click) : keybinds.click;
+	setTimeout(function() {listeningForClick = true}, 10);
+});
+function updateKeyBinds(type, val) {
+	console.log(type, val);
+	if (type == 'click') {
+		keybinds.click = val;
+		listeningForClick = false;
+		listeningForFlag = true;
+		controlType.innerHTML = 'flag';
+		currentBind.innerHTML = typeof(keybinds.flag) == 'number' ? String.fromCharCode(keybinds.flag) : keybinds.flag;
+	}
+	else if (type == 'flag') {
+		console.log('ok');
+		keybinds.flag = val;
+		listeningForFlag = false;
+		controlsPrompt.style.display = 'none';
+	}
+}
+
 
 
 

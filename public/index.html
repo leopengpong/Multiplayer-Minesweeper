@@ -31,6 +31,7 @@
 		#canv {
 			border: 1px solid black;
 			display: none;
+			position: relative;
 		}
 
 		#info {
@@ -55,6 +56,25 @@
 
 		#handleInput {
 			width: 200px;
+		}
+
+		#miscButtons .ui.button {
+			padding: 5px;
+		}
+
+		#controlsPrompt {
+			width: 300px;
+			height: 200px;
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			margin: -100px 0px 0px -150px;
+			display: none;
+			font-size: 20px;
+		}
+
+		#controlType, #currentBind {
+			color: orange;
 		}
 
 
@@ -103,8 +123,9 @@
 		</div>
 	</div>
 
-	<div class="ui segment">
-		<button class="ui button" id="bugReport">Submit Bug Report</button>
+	<div class="ui segment" id="miscButtons">
+		<button class="ui button" id="controlsButton">Change Keybinds</button>
+		<button class="ui button" id="bugReport">Report Bug</button>
 	</div>
 
 	<div id="gameLost" class="ui segment">
@@ -132,6 +153,13 @@
 		</div><br>
 		<button id="newGameConfirm" class="ui button">create new game</button>
 	</div>
+</div>
+
+<div id="controlsPrompt" class="ui segment">
+	<p>
+		<strong>enter key/click mouse button to change binding for <span id="controlType">flag</span></strong><br>
+		<i>currently: <strong><span id="currentBind"></span></strong></i>
+	</p>
 </div>
 
 
