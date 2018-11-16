@@ -11,19 +11,19 @@ app.use(express.static('public'));
 var io = socket(server);
 
 // mongo stuff
-var mongoose = require('mongoose');
-var connectionString = 'mongodb://admin:'+encodeURIComponent('Ilikepie2@')+'@test-cluster-2-shard-00-00-owuzi.mongodb.net:27017,test-cluster-2-shard-00-01-owuzi.mongodb.net:27017,test-cluster-2-shard-00-02-owuzi.mongodb.net:27017/minesweeper?ssl=true&replicaSet=test-cluster-2-shard-0&authSource=admin&retryWrites=true';
-mongoose.connect(connectionString, { useNewUrlParser: true });
+// var mongoose = require('mongoose');
+// var connectionString = 'mongodb://admin:'+encodeURIComponent('Ilikepie2@')+'@test-cluster-2-shard-00-00-owuzi.mongodb.net:27017,test-cluster-2-shard-00-01-owuzi.mongodb.net:27017,test-cluster-2-shard-00-02-owuzi.mongodb.net:27017/minesweeper?ssl=true&replicaSet=test-cluster-2-shard-0&authSource=admin&retryWrites=true';
+// mongoose.connect(connectionString, { useNewUrlParser: true });
 
-var gameSchema = new mongoose.Schema({
-	_id: mongoose.Schema.Types.ObjectId,
-	width: Number,
-	height: Number,
-	density: Number,
-});
+// var gameSchema = new mongoose.Schema({
+// 	_id: mongoose.Schema.Types.ObjectId,
+// 	width: Number,
+// 	height: Number,
+// 	density: Number,
+// });
 
 
-var GameState = mongoose.model('GameState', gameSchema);
+// var GameState = mongoose.model('GameState', gameSchema);
 
 
 // game info
@@ -104,21 +104,21 @@ io.on('connection', function(socket) {
 
 	socket.on('restart', function (data) {
 		game = new Game(data.width, data.height, data.density/100);
-		var newGame = new GameState({
-			_id: new mongoose.Types.ObjectId(),
-			width: data.width,
-			height: data.height,
-			density: data.density/100
-		});
+		// var newGame = new GameState({
+		// 	_id: new mongoose.Types.ObjectId(),
+		// 	width: data.width,
+		// 	height: data.height,
+		// 	density: data.density/100
+		// });
 
-		newGame.save(function(err, game){
-			if(err){
-				console.log("SOMETHING WENT WRONG!")
-			} else {
-				console.log("WE JUST SAVED A CAT TO THE DB:")
-				console.log(game);
-			}
-		});
+		// newGame.save(function(err, game){
+		// 	if(err){
+		// 		console.log("SOMETHING WENT WRONG!")
+		// 	} else {
+		// 		console.log("WE JUST SAVED A CAT TO THE DB:")
+		// 		console.log(game);
+		// 	}
+		// });
 		for (var i = 0; i < players.length; ++i) {
 			players[i].numFlagged = 0;
 			players[i].numClicked = 0;
