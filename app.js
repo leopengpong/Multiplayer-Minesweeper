@@ -1,6 +1,7 @@
 
 var express = require('express');
 var socket = require('socket.io');
+var mongoose = require('mongoose');
 
 var app = express();
 var server = app.listen(process.env.PORT || 4000, function () {
@@ -11,25 +12,94 @@ app.use(express.static('public'));
 var io = socket(server);
 
 // mongo stuff
-// var mongoose = require('mongoose');
-// var connectionString = 'mongodb://admin:'+encodeURIComponent('Ilikepie2@')+'@test-cluster-2-shard-00-00-owuzi.mongodb.net:27017,test-cluster-2-shard-00-01-owuzi.mongodb.net:27017,test-cluster-2-shard-00-02-owuzi.mongodb.net:27017/minesweeper?ssl=true&replicaSet=test-cluster-2-shard-0&authSource=admin&retryWrites=true';
-// mongoose.connect(connectionString, { useNewUrlParser: true });
+var connectionString = 'mongodb://admin:'+encodeURIComponent('Ilikepie2@')+'@minesweeper-shard-00-00-fhrm1.mongodb.net:27017,minesweeper-shard-00-01-fhrm1.mongodb.net:27017,minesweeper-shard-00-02-fhrm1.mongodb.net:27017/games?ssl=true&replicaSet=minesweeper-shard-0&authSource=admin&retryWrites=true';
+mongoose.connect(connectionString, { useNewUrlParser: true });
 
-// var gameSchema = new mongoose.Schema({
-// 	_id: mongoose.Schema.Types.ObjectId,
-// 	width: Number,
-// 	height: Number,
-// 	density: Number,
-// });
-
-
-// var GameState = mongoose.model('GameState', gameSchema);
+var gameSchema = new mongoose.Schema({
+	width: Number,
+	height: Number,
+	density: Number,
+	state: String,
+	revealed: Array,
+	flags: Array,
+	field: Array,
+	numClicked: Number,
+	numFlagged: Number,
+	triggerer: String,
+});
+var GameState = mongoose.model('GameState', gameSchema);
 
 
 // game info
 var players = [];		// {handle, numClicked, numFlagged}
-var game = new Game(10, 10, 0.2);
+var game;
 var triggerer;
+
+
+// update stuff in DB
+function setDB () {
+	var newGame = {
+		width: game.width,
+		height: game.height,
+		density: game.density,
+		state: game.state,
+		revealed: game.revealed,
+		flags: game.flags,
+		field: game.field,
+		numClicked: game.numClicked,
+		numFlagged: game.numFlagged,
+		triggerer: triggerer,
+	};
+
+	GameState.findOneAndUpdate({}, newGame, function () {
+		console.log('existing game updated');
+	});
+}
+function getDB () {
+	GameState.findOne({}, function(err, dbGame){
+		if(err){
+			console.log(err);
+		} else {
+			updateGame(dbGame);
+		}
+	});
+
+	function updateGame (dbGame) {
+		if (dbGame == null || dbGame == undefined) {
+			game = new Game(10, 10, 0.2);
+
+			GameState.create({
+				width: game.width,
+				height: game.height,
+				density: game.density,
+				state: game.state,
+				revealed: game.revealed,
+				flags: game.flags,
+				field: game.field,
+				numClicked: game.numClicked,
+				numFlagged: game.numFlagged,
+				triggerer: triggerer,
+			}, function(err, game){
+				if(err){
+					console.log(err);
+				} else {
+					console.log('new game created in DB');
+				}
+			});
+		} else {
+			game = new Game(dbGame.width, dbGame.height, dbGame.density);
+			game.density = dbGame.density;
+			game.state = dbGame.state;
+			game.revealed = dbGame.revealed;
+			game.flags = dbGame.flags;
+			game.field = dbGame.field;
+			game.numClicked = dbGame.numClicked;
+			game.numFlagged = dbGame.numFlagged;
+			triggerer = dbGame.triggerer;
+			console.log('existing game retrieved');
+		}
+	}
+}
 
 
 // socket stuff
@@ -39,20 +109,25 @@ io.on('connection', function(socket) {
 	socket.on('init', function (data) { // handle
 		socket.handle = data.handle;
 		var newPlayer = {handle:data.handle, numClicked:0, numFlagged:0};
-		players.push(newPlayer);
-		console.log(newPlayer.handle + ' connected');
+		if (players.length == 0) {
+			getDB();
+		}
+		setTimeout(function() {
+			players.push(newPlayer);
+			console.log(newPlayer.handle + ' connected');
 
-		var gameData = {
-			gameData: game.getData(), // state, flagged, field, numClicked/Flagged
-									  // field: -99: mine, undefined: not revealed
-		}
-		socket.emit('init', gameData);
-		io.sockets.emit('update players', players);
-		if (game.state == 'lost') {
-			socket.emit('lost', triggerer);
-		} else if (game.state == 'won') {
-			socket.emit('won');
-		}
+			var gameData = {
+				gameData: game.getData(), // state, flagged, field, numClicked/Flagged
+										  // field: -99: mine, undefined: not revealed
+			}
+			socket.emit('init', gameData);
+			io.sockets.emit('update players', players);
+			if (game.state == 'lost') {
+				socket.emit('lost', triggerer);
+			} else if (game.state == 'won') {
+				socket.emit('won');
+			}
+		}, 500);
 	});
 
 	socket.on('disconnect', function () {
@@ -61,6 +136,9 @@ io.on('connection', function(socket) {
 			if (players[i].handle == socket.handle) {
 				console.log('\t' + socket.handle + ' disconnected');
 				players.splice(i, 1);
+				if (players.length == 0) {
+					setDB();
+				}
 				break;
 			}
 		}
@@ -69,24 +147,27 @@ io.on('connection', function(socket) {
 
 	socket.on('click', function (data) { // handle, x, y
 		var clickData = game.click(data.x, data.y);
-		if (clickData.revealed.length > 0)
+		if (clickData.revealed.length > 0) {
 			io.sockets.emit('update game', clickData);
 
-		for (var i = 0; i < players.length; ++i)
-			if (players[i].handle == data.handle) {
-				if (clickData.revealed.length > 1 ||
-					(clickData.revealed.length == 1 &&
-					clickData.revealed[0].val >= 0))
-					players[i].numClicked += clickData.revealed.length;
-				break;
+			for (var i = 0; i < players.length; ++i)
+				if (players[i].handle == data.handle) {
+					if (clickData.revealed.length > 1 ||
+						(clickData.revealed.length == 1 &&
+						clickData.revealed[0].val >= 0))
+						players[i].numClicked += clickData.revealed.length;
+					break;
+				}
+			io.sockets.emit('update players', players);
+			if (game.state == 'lost') {
+				triggerer = socket.handle;
+				io.sockets.emit('lost', triggerer);
+			} else if (game.state == 'won') {
+				io.sockets.emit('won');
 			}
-		io.sockets.emit('update players', players);
-		if (game.state == 'lost') {
-			triggerer = socket.handle;
-			io.sockets.emit('lost', socket.handle);
-		} else if (game.state == 'won') {
-			io.sockets.emit('won');
 		}
+
+	
 	});
 
 	socket.on('flag', function (data) { // handle, x, y
@@ -104,21 +185,6 @@ io.on('connection', function(socket) {
 
 	socket.on('restart', function (data) {
 		game = new Game(data.width, data.height, data.density/100);
-		// var newGame = new GameState({
-		// 	_id: new mongoose.Types.ObjectId(),
-		// 	width: data.width,
-		// 	height: data.height,
-		// 	density: data.density/100
-		// });
-
-		// newGame.save(function(err, game){
-		// 	if(err){
-		// 		console.log("SOMETHING WENT WRONG!")
-		// 	} else {
-		// 		console.log("WE JUST SAVED A CAT TO THE DB:")
-		// 		console.log(game);
-		// 	}
-		// });
 		for (var i = 0; i < players.length; ++i) {
 			players[i].numFlagged = 0;
 			players[i].numClicked = 0;
